@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CloudPrinter Quotation Generation</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.2/socket.io.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/5.1.1/marked.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+        #header {
+            text-align: center;
+            background-color: #007bff;
+            color: white;
+            padding: 15px;
+            font-size: 1.5rem;
+        }
+        #chat-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            max-width: 800px;
+            margin: auto;
+            width: 100%;
+            height: 100%;
+            padding: 10px;
+        }
+        #messages {
+            flex: 1;
+            overflow-y: auto;
+            border: 1px solid #ccc;
+            padding: 10px;
+            background-color: #fff;
+            border-radius: 5px;
+        }
+        .message {
+            display: flex;
+            align-items: flex-start;
+            margin-bottom: 10px;
+        }
+        .message img {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            margin-right: 10px;
+        }
+        .user-message {
+            justify-content: flex-end;
+        }
+        .bot-message {
+            justify-content: flex-start;
+        }
+        .bot-response, .user-response {
+            padding: 10px;
+            border-radius: 5px;
+            max-width: 75%;
+            word-wrap: break-word;
+        }
+        .bot-response {
+            background-color: #e0f7fa;
+        }
+        .user-response {
+            background-color: #c8e6c9;
+            align-self: flex-end;
+        }
+        #input-container {
+            display: flex;
+            padding: 10px;
+            background-color: white;
+            border-top: 1px solid #ccc;
+        }
+        #user-input {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        #send-button {
+            padding: 10px 15px;
+            margin-left: 10px;
+            border: none;
+            border-radius: 5px;
+            background-color: #007bff;
+            color: white;
+            cursor: pointer;
+        }
+        #send-button:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <div id="header">CloudPrinter Quotation Generation</div>
+    <div id="chat-container">
+        <div id="messages"></div>
+        <div id="input-container">
+            <input type="text" id="user-input" placeholder="Type a message..." />
+            <button id="send-button">Send</button>
+        </div>
+    </div>
+    <script>
+        const socket = io();
+
+        window.onload = () => {
+            addMessage("What can I help you with today?", "bot");
+        };
+
+        socket.on('message', function(data) {
+            addMessage(data.content, data.sender === 'the_human' ? 'user' : 'bot');
+        });
+
+        document.getElementById('send-button').onclick = function() {
+            const input = document.getElementById('user-input');
+            const message = input.value.trim();
+            if (message) {
+                socket.emit('user_message', { message: message });
+                input.value = '';
+            }
+        };
+
+        document.getElementById('user-input').addEventListener('keydown', function(event) {
+            if (event.key === 'Enter') {
+                event.preventDefault();
+                document.getElementById('send-button').click();
+            }
+        });
+
+        function addMessage(message, sender) {
+            const messagesDiv = document.getElementById('messages');
+            const messageDiv = document.createElement('div');
+            messageDiv.classList.add('message', `${sender}-message`);
+
+            const img = document.createElement('img');
+            img.src = sender === 'user' ? 'static/user.png' : 'static/agent.png';
+            messageDiv.appendChild(img);
+
+            const textDiv = document.createElement('div');
+            textDiv.classList.add(sender === 'user' ? 'user-response' : 'bot-response');
+            textDiv.innerHTML = marked.parse(message);
+            messageDiv.appendChild(textDiv);
+
+            messagesDiv.appendChild(messageDiv);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+    </script>
+</body>
+</html>
